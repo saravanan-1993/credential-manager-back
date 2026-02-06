@@ -18,7 +18,6 @@ const ClientSchema = new mongoose.Schema({
     },
     projectType: {
         type: String,
-        enum: ['Web', 'App', 'SaaS', 'SEO', 'Other'],
         default: 'Web'
     },
     website: {
