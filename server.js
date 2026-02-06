@@ -49,11 +49,13 @@ const dashboardRoutes = require('./routes/dashboard');
 const assetRoutes = require('./routes/assets');
 const clientRoutes = require('./routes/clients');
 const projectRoutes = require('./routes/projects');
+const authRoutes = require('./routes/auth');
 
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/auth', authRoutes);
 
 // 404 handler
 app.use((req, res) => {
