@@ -33,16 +33,44 @@ app.use(cors({
 app.use(helmet());
 app.use(morgan('dev'));
 
-// Database Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/magizh_asset_manager', {
-    // useNewUrlParser and useUnifiedTopology are no longer needed in Mongoose 6+ but keeping just in case of older version (though we installed latest)
-})
-    .then(() => console.log('MongoDB Connected'))
-    .catch(err => console.error('MongoDB Connection Error:', err));
+// Database Connection - cached for Vercel serverless
+let isConnected = false;
+async function connectDB() {
+    if (isConnected) return;
+    try {
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/magizh_asset_manager');
+        isConnected = true;
+        console.log('MongoDB Connected');
+    } catch (err) {
+        console.error('MongoDB Connection Error:', err);
+        throw err;
+    }
+}
+
+// Ensure DB is connected before handling any API request
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        res.status(503).json({ msg: 'Database connection failed' });
+    }
+});
 
 // Basic Route
 app.get('/', (req, res) => {
     res.json({ message: 'Magizh Asset Manager API is running' });
+});
+
+// Health Check
+app.get('/health', (req, res) => {
+    const dbState = mongoose.connection.readyState;
+    const dbStatus = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+    res.status(dbState === 1 ? 200 : 503).json({
+        status: dbState === 1 ? 'ok' : 'degraded',
+        database: dbStatus[dbState] || 'unknown',
+        uptime: process.uptime()
+    });
 });
 
 const dashboardRoutes = require('./routes/dashboard');
